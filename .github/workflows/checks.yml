@@ -1,0 +1,15 @@
+name: Host checks
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  host:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python3 -m unittest discover -s tests -p test_vectors.py
+      - run: python3 scripts/check_all.py
+      - run: python3 scripts/package.py --out dist/WHEEL01.ZIP

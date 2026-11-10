@@ -1,0 +1,13 @@
+* text=auto
+*.asm text eol=crlf
+*.ASM text eol=crlf
+*.BAT text eol=crlf
+*.C text eol=crlf
+*.DEF text eol=crlf
+*.LNK text eol=crlf
+*.DRV binary
+*.EXE binary
+*.zip binary
+*.TXT text eol=crlf
+*.py text eol=lf
+*.PY text eol=lf
