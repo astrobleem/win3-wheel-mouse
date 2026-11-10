@@ -112,12 +112,12 @@ def inspect_image(image):
             relocations.append(dict(segment=index + 1, address_type=address_type,
                                     kind=kind, offset=offset, target=target,
                                     target_offset=target_offset))
-    # Both interrupt entry points establish DS independently. WEP calls the
+    # All three interrupt entry points establish DS independently. WEP calls the
     # exported Disable routine through one internal far-address relocation.
-    require(len(relocations) == 3, 'Expected two DS fixups and one WEP call')
+    require(len(relocations) == 4, 'Expected three DS fixups and one WEP call')
     selectors = [r for r in relocations if r['address_type'] == 2]
     calls = [r for r in relocations if r['address_type'] == 3]
-    require(len(selectors) == 2 and len(calls) == 1, 'Unexpected relocation types')
+    require(len(selectors) == 3 and len(calls) == 1, 'Unexpected relocation types')
     code = segments[0]
     for relocation in relocations:
         require(relocation['segment'] == 1 and relocation['kind'] == 0,

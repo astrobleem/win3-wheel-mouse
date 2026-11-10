@@ -12,4 +12,4 @@ jobs:
           python-version: '3.12'
       - run: python3 -m unittest discover -s tests -p test_vectors.py
       - run: python3 scripts/check_all.py
-      - run: python3 scripts/package.py --out dist/WHEEL01.ZIP
+      - run: python3 scripts/package.py --out dist/WHEEL02.ZIP

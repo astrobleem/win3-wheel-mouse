@@ -539,9 +539,13 @@ serial_send:
  mov ax,40h
  mov es,ax
  mov bx,es:[6ch]
+ mov dx,2
 serial_delay:
  cmp bx,es:[6ch]
  je serial_delay
+ mov bx,es:[6ch]
+ dec dx
+ jnz serial_delay
  pop es
  ret
 send_serial endp

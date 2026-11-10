@@ -1,10 +1,10 @@
 ; SPDX-License-Identifier: MIT
-; Windows XT real-mode serial and DOS INT 33h mouse transports.
+; Windows XT real-mode direct serial, PS/2 and optional DOS transports.
 ; First-party MIT candidate. No DDK macros or runtime objects are linked.
 .8086
 .model small
 ifndef TRANSPORT
-TRANSPORT equ 0 ; 0 Auto, 1 explicit serial, 2 DOS only
+TRANSPORT equ 0 ; 0 direct Auto, 1 serial, 2 DOS only, 3 PS/2, 4 test legacy auto
 endif
 ifndef SERIALCOM
 SERIALCOM equ 1
@@ -36,6 +36,7 @@ saved_mcr db 0
 saved_div dw 0
 .code
 extrn dos_detect:near, dos_enable:near, dos_disable:near
+extrn ps2_enable:near, ps2_disable:near
 extrn dec_reset:near, dec_feed:near, dec_read:near, dec_lost:near, dec_q_head:byte, dec_q_tail:byte, dec_q_count:byte, timestamp_table:byte, timestamp_oldhead:byte
 public LibMain, Inquire, Enable, Disable, MouseGetIntVect, WEP
 public WheelApiVersion, WheelReadDelta, WheelLostPackets, WheelReadDeltaAge, WheelStatus
@@ -97,7 +98,7 @@ Enable proc far
 enable_select:
  call dec_reset
  mov backend_status,0
-if TRANSPORT ne 1
+if TRANSPORT eq 2 or TRANSPORT eq 4
  push es
  call dos_detect
  pop es
@@ -115,7 +116,36 @@ if TRANSPORT eq 2
  mov backend_status,8002h
  jmp enable_done
 endif
+else
+ ; Direct transports must not take hardware from any resident DOS mouse.
+ push es
+ xor ax,ax
+ mov es,ax
+ les bx,es:[0cch]
+ mov ax,es
+ or ax,bx
+ jz enable_direct
+ cmp byte ptr es:[bx],0cfh
+ je enable_direct
+ pop es
+ mov backend_status,8007h
+ jmp enable_done
+enable_direct:
+ pop es
+if TRANSPORT ne 1
+ call ps2_enable
+ jc enable_ps2_failed
+ jmp enable_done
+enable_ps2_failed:
+if TRANSPORT eq 0
+ cmp ax,8003h
+ je enable_serial
 endif
+ mov backend_status,ax
+ jmp enable_done
+endif
+endif
+enable_serial:
  push es
  xor ax,ax
  mov es,ax
@@ -199,6 +229,16 @@ Disable proc far
  jne disable_active
  jmp disable_done
 disable_active:
+ cmp active,3
+ jne disable_not_ps2
+ call ps2_disable
+ mov backend_status,0
+ jnc disable_ps2_clear
+ mov backend_status,8006h
+disable_ps2_clear:
+ call dec_reset
+ jmp disable_done
+disable_not_ps2:
  cmp active,2
  jne disable_serial
  call dos_disable
@@ -266,6 +306,9 @@ MouseGetIntVect proc far
  mov ax,0ffffh
  test backend_status,8000h
  jnz vector_done
+ mov ax,74h
+ cmp active,3
+ je vector_done
  mov ax,IRQNUM
  cmp active,2
  jne vector_done

@@ -4,7 +4,7 @@ from pathlib import Path
 from check_image import inspect_image
 
 ROOT = Path(__file__).resolve().parents[1]
-for name in ('WHEEL', 'WDOS', 'WCOM1', 'WCOM2'):
+for name in ('WHEEL', 'WDOS', 'WCOM1', 'WCOM2', 'WPS2'):
     result = inspect_image((ROOT / 'bin' / (name + '.DRV')).read_bytes())
     print(name + ': ' + result['status'])
 for name in ('WHEELCHK.EXE', 'WDIAG.EXE'):

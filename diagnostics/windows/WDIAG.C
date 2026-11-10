@@ -19,6 +19,13 @@ static void number(LPSTR key,long value) {
  char buf[90]; wsprintf(buf,"%s=%ld",key,value); logline(buf);
 }
 static LPSTR backend(void) {
+ if(status==0x0103)return "Direct PS/2 / wheel negotiated";
+ if(status==3)return "Direct PS/2 / standard mouse";
+ if(status==0x8003)return "STOPPED: PS/2 AUX not present";
+ if(status==0x8004)return "STOPPED: PS/2 busy; cold reboot with no DOS mouse";
+ if(status==0x8005)return "STOPPED: PS/2 command failed";
+ if(status==0x8006)return "STOPPED: PS/2 cleanup failed; reboot";
+ if(status==0x8007)return "STOPPED: remove DOS mouse and reboot";
  if(status==0x0102)return "DOS mouse / wheel advertised";
  if(status==2)return "DOS mouse / no wheel advertised";
  if(status==0x0101)return "Direct serial / wheel parser ready";
@@ -57,7 +64,7 @@ LONG FAR PASCAL WndProc(HWND w,UINT m,WPARAM a,LPARAM b) {
   EndPaint(w,&ps);return 0;
  case WM_DESTROY:
   KillTimer(w,1);
-  if(!(status==2 || status==0x0101 || status==0x0102))++failures;
+  if(!(status==2 || status==0x0101 || status==0x0102 || status==3 || status==0x0103))++failures;
   number("VERSION",version);number("STATUS",status);
   number("WHEEL_EVENTS",events);number("WHEEL_TOTAL",total);
   number("MOVES",moves);number("CLICKS",clicks);number("LOST",lost);
@@ -76,7 +83,7 @@ int PASCAL WinMain(HINSTANCE hi,HINSTANCE prev,LPSTR cmd,int show) {
  logFile=_lcreat("WDIAG.LOG",0);
  if(logFile==-1){MessageBox(NULL,"Cannot create WDIAG.LOG in the working directory.","Wheel diagnostic",MB_OK);return 1;}
  autoMode=lstrcmpi(cmd,"/AUTO")==0;
- logline("WDIAG 0.1 - synthetic checks do not prove physical wheel delivery");
+ logline("WDIAG 0.2 - synthetic checks do not prove physical wheel delivery");
  module=GetModuleHandle("MOUSE");
  if(module){
   path[0]=0;GetModuleFileName(module,path,sizeof(path));logline(path);
